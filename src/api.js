@@ -17,30 +17,36 @@ export function getPastDates(numDays) {
 // ─── TRUMP MENTION FETCH ───────────────────────────────────────────────────
 async function fetchMentionsForDate(dateStr, isToday) {
   const rangeLabel = isToday ? `today (${dateStr})` : `on ${dateStr}`
-  const prompt = `Search the web for any statements, Truth Social posts, tweets, speeches, press briefings, or interviews from President Donald Trump ${rangeLabel} where he mentions, references, promotes, criticizes, or talks about any specific publicly traded stock, company, or financial asset.
+  const prompt = `Search the web thoroughly for ANY of the following ${rangeLabel} that involve President Donald Trump and specific publicly traded stocks or companies:
 
-For each mention found, analyze the sentiment of what Trump said toward that stock or company. Determine whether his statement is BULLISH (positive, supportive, praising, predicting growth, endorsing) or BEARISH (negative, critical, threatening, predicting decline, attacking) toward the stock price.
+1. DIRECT MENTIONS — Trump personally names, praises, criticizes, or references a stock/company in a Truth Social post, tweet, speech, press briefing, interview, or press conference.
+
+2. ADMINISTRATION ACTIONS — The Trump administration (including the White House, Cabinet departments like Commerce, Treasury, DOD, DOE) announces a policy, award, investment, tariff, sanction, contract, CHIPS Act grant, equity stake, or executive order that directly and significantly affects a specific publicly traded company.
+
+3. INDIRECT MARKET-MOVING STATEMENTS — Trump or his administration makes a statement that clearly targets a specific company even without naming the stock ticker (e.g., calling out a CEO by name, announcing a government investment in a company, awarding a federal contract).
+
+For each event found, analyze the sentiment toward that stock. Determine whether it is BULLISH or BEARISH for the stock price.
 
 Return ONLY a JSON array (no markdown, no explanation, no code fences) with objects exactly like:
 [
   {
     "date": "YYYY-MM-DD HH:MM",
-    "ticker": "TSLA",
-    "company": "Tesla",
-    "context": "Brief quote or paraphrase of what Trump said",
+    "ticker": "IBM",
+    "company": "International Business Machines",
+    "context": "Brief quote or paraphrase of what Trump or his administration said/did",
     "sentiment": "bullish",
-    "sentimentReason": "One sentence explaining why this is bullish or bearish",
+    "sentimentReason": "One sentence explaining why this is bullish or bearish for the stock",
     "source": "URL or source name"
   }
 ]
 
-Rules for sentiment:
-- "bullish" = Trump said something that would likely cause the stock to go UP (praise, endorsement, partnership, tariff exemption, contract award, favorable policy)
-- "bearish" = Trump said something that would likely cause the stock to go DOWN (criticism, threat, sanctions, tariff imposition, investigation, attack)
-- "neutral" = purely informational with no clear directional impact
+Sentiment rules:
+- "bullish" = likely causes stock to go UP (praise, endorsement, government investment, contract award, tariff exemption, favorable policy, equity stake)
+- "bearish" = likely causes stock to go DOWN (criticism, threat, tariff imposition, sanctions, investigation, attack, contract cancellation)
+- "neutral" = purely informational with no clear directional price impact
 
-The date field must fall on ${dateStr}. If no mentions are found, return: []
-Be precise. Only include real, verifiable mentions. Do not hallucinate.`
+The date field must fall on ${dateStr}. If nothing is found, return: []
+Be precise. Only include real, verifiable events. Do not hallucinate.`
 
   const response = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
@@ -52,7 +58,7 @@ Be precise. Only include real, verifiable mentions. Do not hallucinate.`
     },
     body: JSON.stringify({
       model: 'claude-sonnet-4-20250514',
-      max_tokens: 1500,
+      max_tokens: 2000,
       tools: [{ type: 'web_search_20250305', name: 'web_search' }],
       messages: [{ role: 'user', content: prompt }],
     }),
