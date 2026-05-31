@@ -3,15 +3,16 @@ export default async function handler(req, res) {
 
   const { type, ...body } = req.body
 
-  // NewsAPI proxy
+  // NewsAPI proxy - key stays server side
   if (type === 'news') {
-    const { url } = body
+    const { query, from } = body
+    const url = `https://newsapi.org/v2/everything?q=${query}&language=en&from=${from}&sortBy=publishedAt&pageSize=20&apiKey=${process.env.VITE_NEWSAPI_KEY}`
     const response = await fetch(url)
     const data = await response.json()
     return res.status(response.status).json(data)
   }
 
-  // Anthropic proxy (default)
+  // Anthropic proxy
   const response = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
     headers: {
