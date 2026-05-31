@@ -1,6 +1,7 @@
 // ─── CONFIG ────────────────────────────────────────────────────────────────
 export const ANTHROPIC_KEY = import.meta.env.VITE_ANTHROPIC_API_KEY ?? ''
 export const FINNHUB_KEY   = import.meta.env.VITE_FINNHUB_API_KEY   ?? ''
+export const NEWSAPI_KEY   = import.meta.env.VITE_NEWSAPI_KEY ?? ''
 
 const STORAGE_KEY = 'trump_market_mentions'
 
@@ -30,20 +31,42 @@ function mergeAndStore(existing, fresh) {
   return merged.sort((a, b) => (a.date < b.date ? 1 : -1))
 }
 
-// ─── TRUMP MENTION FETCH (TODAY ONLY) ──────────────────────────────────────
-async function fetchTodayMentions() {
+// ─── FETCH NEWS HEADLINES ──────────────────────────────────────────────────
+async function fetchTrumpStockNews() {
   const today = new Date().toISOString().split('T')[0]
-  const prompt = `Search the web for Trump stock mentions today ${today}. Include: direct mentions in speeches/Truth Social/interviews, admin actions (tariffs, CHIPS grants, contracts, equity stakes) targeting specific public companies. Return ONLY a JSON array, no markdown:
-[{"date":"${today} HH:MM","ticker":"TSLA","company":"Tesla","context":"what Trump said/did","sentiment":"bullish","sentimentReason":"why bullish/bearish","source":"url"}]
-sentiment: bullish=stock goes up, bearish=stock goes down, neutral=no clear impact. If none found return []. Real events only.`
+  const url = `https://newsapi.org/v2/everything?q=Trump+stock+OR+Trump+shares+OR+Trump+company+OR+Trump+tariff&language=en&from=${today}&sortBy=publishedAt&pageSize=20&apiKey=${NEWSAPI_KEY}`
+  const res = await fetch(url)
+  const data = await res.json()
+  if (!data.articles) return []
+  return data.articles.map(a => ({
+    title: a.title,
+    description: a.description,
+    url: a.url,
+    publishedAt: a.publishedAt,
+  }))
+}
+
+// ─── CLAUDE ANALYSIS (NO WEB SEARCH) ──────────────────────────────────────
+async function analyzeWithClaude(articles) {
+  if (!articles.length) return []
+  const today = new Date().toISOString().split('T')[0]
+  const articleText = articles.map((a, i) =>
+    `${i + 1}. [${a.publishedAt}] ${a.title}. ${a.description || ''} (source: ${a.url})`
+  ).join('\n')
+
+  const prompt = `From these news headlines, extract only items where Trump or his administration directly mentions, praises, criticizes, or takes action affecting a specific publicly traded stock or company. Return ONLY a JSON array, no markdown:
+[{"date":"${today} HH:MM","ticker":"TSLA","company":"Tesla","context":"what happened","sentiment":"bullish","sentimentReason":"why","source":"url"}]
+sentiment: bullish=stock goes up, bearish=stock goes down, neutral=no impact. If none found return [].
+
+Headlines:
+${articleText}`
 
   const response = await fetch('/api/chat', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       model: 'claude-sonnet-4-5',
-      max_tokens: 1500,
-      tools: [{ type: 'web_search_20250305', name: 'web_search' }],
+      max_tokens: 1000,
       messages: [{ role: 'user', content: prompt }],
     }),
   })
@@ -67,7 +90,8 @@ export async function fetchAllMentions() {
   const historical = stored
     .filter(m => !m.date?.startsWith(todayStr))
     .map(m => ({ ...m, isHistorical: true }))
-  const todayFresh = await fetchTodayMentions()
+  const articles = await fetchTrumpStockNews()
+  const todayFresh = await analyzeWithClaude(articles)
   return mergeAndStore(historical, todayFresh)
 }
 
