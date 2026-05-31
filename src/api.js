@@ -1,7 +1,4 @@
 // ─── CONFIG ────────────────────────────────────────────────────────────────
-// Set your keys in .env:
-//   VITE_ANTHROPIC_API_KEY=sk-ant-...
-//   VITE_FINNHUB_API_KEY=your_key_here
 export const ANTHROPIC_KEY = import.meta.env.VITE_ANTHROPIC_API_KEY ?? ''
 export const FINNHUB_KEY   = import.meta.env.VITE_FINNHUB_API_KEY   ?? ''
 
@@ -48,13 +45,10 @@ Sentiment rules:
 The date field must fall on ${dateStr}. If nothing is found, return: []
 Be precise. Only include real, verifiable events. Do not hallucinate.`
 
-  const response = await fetch('https://api.anthropic.com/v1/messages', {
+  const response = await fetch('/api/chat', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'x-api-key': ANTHROPIC_KEY,
-      'anthropic-version': '2023-06-01',
-      'anthropic-dangerous-direct-browser-access': 'true',
     },
     body: JSON.stringify({
       model: 'claude-sonnet-4-20250514',
