@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
+import useMobile from './useMobile'
 import {
   fetchAllMentions,
   fetchStockPrice,
@@ -335,6 +336,7 @@ const s = {
 
 // ─── COMPONENT ─────────────────────────────────────────────────────────────
 export default function TrumpStockTracker() {
+  const isMobile = useMobile()
   const [mentions, setMentions]       = useState([])
   const [loading, setLoading]         = useState(false)
   const [lastUpdated, setLastUpdated] = useState(() => {
@@ -441,7 +443,7 @@ export default function TrumpStockTracker() {
       {/* ── Header ── */}
       <header style={s.header}>
         <div style={s.flagStripe} />
-        <div style={s.headerInner}>
+        <div style={s.headerInner} className="header-inner">
           <div style={s.logoBlock}>
             <svg style={s.eagle} width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <rect width="48" height="48" rx="10" fill="rgba(196,18,48,0.08)" stroke="rgba(196,18,48,0.25)" strokeWidth="1"/>
@@ -451,7 +453,7 @@ export default function TrumpStockTracker() {
                 <line x1="6" y1="40" x2="42" y2="40" stroke="rgba(0,0,0,0.12)" strokeWidth="1"/>
               </svg>
             <div>
-              <h1 style={s.title}>Trump Market Watch</h1>
+              <h1 style={{ ...s.title, fontSize: isMobile ? 18 : 26 }}>Trump Market Watch</h1>
               <p style={s.subtitle}>Real-time stock mentions tracker</p>
             </div>
           </div>
@@ -499,7 +501,7 @@ export default function TrumpStockTracker() {
       )}
 
       {/* ── Stats ── */}
-      <div style={s.statsRow}>
+      <div style={{ ...s.statsRow, padding: isMobile ? '0 12px' : '0 24px' }} className="stats-grid">
         {[
           { label: 'Mentions Today',    val: todayMentions.length },
           { label: 'Last 4 Days Total', val: mentions.length },
@@ -514,7 +516,7 @@ export default function TrumpStockTracker() {
       </div>
 
       {/* ── Date Filter Dropdowns ── */}
-      <div style={s.filterRow}>
+      <div style={{ ...s.filterRow, padding: isMobile ? '0 12px' : '0 24px' }}>
         <span style={s.filterLabel}>Filter by:</span>
 
         <select style={s.select} value={filterMonth} onChange={(e) => setFilterMonth(e.target.value)}>
@@ -548,7 +550,7 @@ export default function TrumpStockTracker() {
       </div>
 
       {/* ── Table ── */}
-      <div style={s.tableWrapper}>
+      <div style={{ ...s.tableWrapper, padding: isMobile ? '0 12px 40px' : '0 24px 40px' }} className="table-scroll">
         <table style={s.table}>
           <thead>
             <tr>

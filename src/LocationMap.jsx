@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
+import useMobile from './useMobile'
 
 const REFRESH_MS  = 60 * 60 * 1000
 const STORAGE_KEY    = 'trump_location'
@@ -135,6 +136,7 @@ const s = {
 }
 
 export default function LocationMap() {
+  const isMobile = useMobile()
   const [locData, setLocData]       = useState(() => loadStored())
   const [history, setHistory]       = useState([])
   const [loading, setLoading]       = useState(false)
@@ -300,8 +302,8 @@ export default function LocationMap() {
   }, [])
 
   return (
-    <div style={s.root}>
-      <div style={s.topBar}>
+    <div style={{ ...s.root, padding: isMobile ? '16px 12px 48px' : '24px 24px 48px' }}>
+      <div style={{ ...s.topBar, flexDirection: isMobile ? 'column' : 'row', alignItems: isMobile ? 'flex-start' : 'flex-start' }}>
         <div>
           <p style={s.heading}>Trump Location Tracker</p>
           {lastUpdated && (
@@ -321,9 +323,9 @@ export default function LocationMap() {
 
       {error && <div style={s.error}>Error: {error}</div>}
 
-      <div style={s.grid}>
+      <div style={{ ...s.grid, gridTemplateColumns: isMobile ? '1fr' : '1fr 320px' }} className="map-grid">
         {/* Map */}
-        <div style={s.mapBox}>
+        <div style={{ ...s.mapBox, height: isMobile ? 280 : 480 }}>
           {loading && !locData
             ? <div style={s.spinner} />
             : <div ref={mapRef} style={{ width: '100%', height: '100%' }} />

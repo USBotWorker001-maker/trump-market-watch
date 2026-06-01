@@ -11,9 +11,23 @@ html, body, #root {
 }
 
 body {
-  background: #060b14;
-  color: #e2e8f0;
+  background: #f8f7f2;
+  color: #0a1628;
   -webkit-font-smoothing: antialiased;
+}
+
+/* ── Mobile table scroll ── */
+.table-scroll { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+/* ── Mobile tab bar scroll ── */
+.tab-bar { overflow-x: auto; -webkit-overflow-scrolling: touch; white-space: nowrap; scrollbar-width: none; }
+.tab-bar::-webkit-scrollbar { display: none; }
+
+@media (max-width: 768px) {
+  .stats-grid  { grid-template-columns: repeat(2, 1fr) !important; }
+  .map-grid    { grid-template-columns: 1fr !important; }
+  .header-inner { flex-direction: column; align-items: flex-start !important; gap: 10px !important; }
+  .congress-controls { flex-direction: column; align-items: flex-start !important; }
 }
 
 @keyframes spin {

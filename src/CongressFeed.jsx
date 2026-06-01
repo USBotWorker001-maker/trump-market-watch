@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
+import useMobile from './useMobile'
 
 const REFRESH_MS   = 60 * 60 * 1000
 const STORAGE_KEY  = 'congress_trades'
@@ -76,7 +77,7 @@ function shortAmount(raw) {
 }
 
 const s = {
-  root:  { maxWidth: 1200, margin: '0 auto', padding: '24px 24px 48px' },
+  root:  { maxWidth: 1200, margin: '0 auto', padding: '16px 12px 48px' },
   topBar: {
     display: 'flex', alignItems: 'center', justifyContent: 'space-between',
     marginBottom: 16, flexWrap: 'wrap', gap: 10,
@@ -157,6 +158,7 @@ const s = {
 }
 
 export default function CongressFeed() {
+  const isMobile = useMobile()
   const [trades, setTrades]         = useState(() => loadStored())
   const [loading, setLoading]       = useState(false)
   const [error, setError]           = useState(null)
@@ -216,8 +218,8 @@ export default function CongressFeed() {
   })
 
   return (
-    <div style={s.root}>
-      <div style={s.topBar}>
+    <div style={{ ...s.root, padding: isMobile ? '16px 12px 48px' : '24px 24px 48px' }}>
+      <div style={{ ...s.topBar, flexDirection: isMobile ? 'column' : 'row', alignItems: isMobile ? 'flex-start' : 'center' }}>
         <div>
           <p style={s.heading}>Congressional Trades — Trump Allies</p>
           {lastUpdated && (
@@ -260,6 +262,7 @@ export default function CongressFeed() {
       ) : filtered.length === 0 ? (
         <div style={s.empty}>No trades found.</div>
       ) : (
+        <div className="table-scroll">
         <table style={s.table}>
           <thead>
             <tr>
@@ -293,6 +296,7 @@ export default function CongressFeed() {
             ))}
           </tbody>
         </table>
+        </div>
       )}
     </div>
   )

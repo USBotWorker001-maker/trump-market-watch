@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { extractStocksFromPosts } from './api'
+import useMobile from './useMobile'
 
 const REFRESH_MS        = 60 * 60 * 1000
 const STORAGE_KEY       = 'truth_social_posts'
@@ -80,7 +81,7 @@ function formatDate(dateStr) {
 }
 
 const s = {
-  root: { maxWidth: 800, margin: '0 auto', padding: '24px 24px 48px' },
+  root: { maxWidth: 800, margin: '0 auto', padding: '16px 12px 48px' },
   header: {
     display: 'flex', alignItems: 'center', justifyContent: 'space-between',
     marginBottom: 20, flexWrap: 'wrap', gap: 10,
@@ -146,6 +147,7 @@ const s = {
 }
 
 export default function TruthSocialFeed() {
+  const isMobile = useMobile()
   const [posts, setPosts]           = useState(() => loadStored())
   const [loading, setLoading]       = useState(false)
   const [error, setError]           = useState(null)
@@ -202,7 +204,7 @@ export default function TruthSocialFeed() {
   }, [refresh])
 
   return (
-    <div style={s.root}>
+    <div style={{ ...s.root, padding: isMobile ? '16px 12px 48px' : '24px 24px 48px' }}>
       <div style={s.header}>
         <div>
           <p style={s.heading}>Truth Social — @realDonaldTrump</p>
