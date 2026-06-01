@@ -3,7 +3,8 @@ export const ANTHROPIC_KEY = import.meta.env.VITE_ANTHROPIC_API_KEY ?? ''
 export const FINNHUB_KEY   = import.meta.env.VITE_FINNHUB_API_KEY   ?? ''
 export const NEWSAPI_KEY   = import.meta.env.VITE_NEWSAPI_KEY ?? ''
 
-const STORAGE_KEY = 'trump_market_mentions'
+const STORAGE_KEY    = 'trump_market_mentions'
+const NEWS_HASH_KEY  = 'trump_news_hash'
 
 // ─── DATE HELPERS ──────────────────────────────────────────────────────────
 export function getPastDates(numDays) {
@@ -32,6 +33,7 @@ function mergeAndStore(existing, fresh) {
 }
 
 // ─── FETCH NEWS HEADLINES ──────────────────────────────────────────────────
+// Returns a pre-compressed string — one line per article, ~40 tokens each
 async function fetchTrumpStockNews() {
   const today = new Date().toISOString().split('T')[0]
 
@@ -46,36 +48,30 @@ async function fetchTrumpStockNews() {
   })
 
   const data = await res.json()
-  if (!data.articles) return []
-  return data.articles.map(a => ({
-    title: a.title,
-    description: a.description,
-    url: a.url,
-    publishedAt: a.publishedAt,
-  }))
+  if (!data.articles?.length) return ''
+
+  return data.articles
+    .map(a => `[${(a.publishedAt ?? '').slice(11, 16)}] ${a.title}. ${(a.description ?? '').slice(0, 80)} <${a.url}>`)
+    .join('\n')
 }
 
-// ─── CLAUDE ANALYSIS (NO WEB SEARCH) ──────────────────────────────────────
-async function analyzeWithClaude(articles) {
-  if (!articles.length) return []
+// ─── CLAUDE ANALYSIS ───────────────────────────────────────────────────────
+// Takes the pre-compressed article string — no internal mapping needed
+async function analyzeWithClaude(articleString) {
+  if (!articleString) return []
   const today = new Date().toISOString().split('T')[0]
-  const articleText = articles.map((a, i) =>
-    `${i + 1}. [${a.publishedAt}] ${a.title}. ${a.description || ''} (source: ${a.url})`
-  ).join('\n')
 
-  const prompt = `From these news headlines, extract only items where Trump or his administration directly mentions, praises, criticizes, or takes action affecting a specific publicly traded stock or company. Return ONLY a JSON array, no markdown:
-[{"date":"${today} HH:MM","ticker":"TSLA","company":"Tesla","context":"what happened","sentiment":"bullish","sentimentReason":"why","source":"url"}]
-sentiment: bullish=stock goes up, bearish=stock goes down, neutral=no impact. If none found return [].
+  const prompt = `Extract Trump stock mentions. Return JSON array only, [] if none.
+Schema: {date:"${today} HH:MM",ticker,company,context,sentiment:"bullish|bearish|neutral",sentimentReason,source}
 
-Headlines:
-${articleText}`
+${articleString}`
 
   const response = await fetch('/api/chat', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      model: 'claude-sonnet-4-5',
-      max_tokens: 1000,
+      model: 'claude-haiku-4-5',
+      max_tokens: 350,
       messages: [{ role: 'user', content: prompt }],
     }),
   })
@@ -95,12 +91,22 @@ ${articleText}`
 
 export async function fetchAllMentions() {
   const todayStr = new Date().toISOString().split('T')[0]
-  const stored = loadStored()
+  const stored   = loadStored()
   const historical = stored
     .filter(m => !m.date?.startsWith(todayStr))
     .map(m => ({ ...m, isHistorical: true }))
-  const articles = await fetchTrumpStockNews()
-  const todayFresh = await analyzeWithClaude(articles)
+
+  const articleString = await fetchTrumpStockNews()
+
+  // Skip Claude call if news feed hasn't changed since last refresh
+  const newHash  = articleString.slice(0, 120)
+  const lastHash = sessionStorage.getItem(NEWS_HASH_KEY)
+  if (newHash && newHash === lastHash) {
+    return mergeAndStore(historical, [])
+  }
+  if (newHash) sessionStorage.setItem(NEWS_HASH_KEY, newHash)
+
+  const todayFresh = await analyzeWithClaude(articleString)
   return mergeAndStore(historical, todayFresh)
 }
 
