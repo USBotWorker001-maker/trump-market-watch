@@ -3,8 +3,8 @@ export const ANTHROPIC_KEY = import.meta.env.VITE_ANTHROPIC_API_KEY ?? ''
 export const FINNHUB_KEY   = import.meta.env.VITE_FINNHUB_API_KEY   ?? ''
 export const NEWSAPI_KEY   = import.meta.env.VITE_NEWSAPI_KEY ?? ''
 
-const STORAGE_KEY    = 'trump_market_mentions'
-const NEWS_HASH_KEY  = 'trump_news_hash'
+const STORAGE_KEY   = 'trump_market_mentions'
+const NEWS_HASH_KEY = 'trump_news_hash'
 
 // ─── DATE HELPERS ──────────────────────────────────────────────────────────
 export function getPastDates(numDays) {
@@ -32,31 +32,87 @@ function mergeAndStore(existing, fresh) {
   return merged.sort((a, b) => (a.date < b.date ? 1 : -1))
 }
 
-// ─── FETCH NEWS HEADLINES ──────────────────────────────────────────────────
-// Returns a pre-compressed string — one line per article, ~40 tokens each
-async function fetchTrumpStockNews() {
+// ─── SOURCE 1: NEWSAPI (3 parallel queries) ────────────────────────────────
+async function fetchNewsAPI() {
   const today = new Date().toISOString().split('T')[0]
+  const queries = [
+    'Trump+stock+OR+Trump+shares+OR+Trump+company',
+    'Trump+tariff+OR+Trump+trade+deal+OR+Trump+sanctions',
+    'Trump+praises+OR+Trump+criticizes+OR+Trump+announces+billion',
+  ]
 
-  const res = await fetch('/api/chat', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      type: 'news',
-      query: 'Trump+stock+OR+Trump+shares+OR+Trump+company+OR+Trump+tariff',
-      from: today,
-    }),
-  })
+  const results = await Promise.allSettled(
+    queries.map(q =>
+      fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: 'news', query: q, from: today }),
+      }).then(r => r.json())
+    )
+  )
 
-  const data = await res.json()
-  if (!data.articles?.length) return ''
+  const seen = new Set()
+  const lines = []
+  for (const r of results) {
+    if (r.status !== 'fulfilled' || !r.value.articles) continue
+    for (const a of r.value.articles) {
+      if (seen.has(a.url)) continue
+      seen.add(a.url)
+      lines.push(`[NewsAPI ${(a.publishedAt ?? '').slice(11, 16)}] ${a.title}. ${(a.description ?? '').slice(0, 80)} <${a.url}>`)
+    }
+  }
+  return lines.join('\n')
+}
 
-  return data.articles
-    .map(a => `[${(a.publishedAt ?? '').slice(11, 16)}] ${a.title}. ${(a.description ?? '').slice(0, 80)} <${a.url}>`)
-    .join('\n')
+// ─── SOURCE 2: TRUTH SOCIAL RSS ───────────────────────────────────────────
+async function fetchTruthSocial() {
+  try {
+    const res = await fetch('/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type: 'rss', url: 'https://truthsocial.com/@realDonaldTrump.rss' }),
+    })
+    const data = await res.json()
+    if (!data.items?.length) return ''
+    return data.items
+      .slice(0, 20)
+      .map(i => `[TruthSocial ${(i.pubDate ?? '').slice(0, 16)}] ${(i.content ?? i.title ?? '').slice(0, 200)} <${i.link ?? ''}>`)
+      .join('\n')
+  } catch { return '' }
+}
+
+// ─── SOURCE 3: WHITE HOUSE BRIEFING ROOM RSS ──────────────────────────────
+async function fetchWhiteHouse() {
+  try {
+    const res = await fetch('/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type: 'rss', url: 'https://www.whitehouse.gov/feed/' }),
+    })
+    const data = await res.json()
+    if (!data.items?.length) return ''
+    return data.items
+      .slice(0, 15)
+      .map(i => `[WhiteHouse ${(i.pubDate ?? '').slice(0, 16)}] ${i.title ?? ''}. ${(i.content ?? i.description ?? '').slice(0, 120)} <${i.link ?? ''}>`)
+      .join('\n')
+  } catch { return '' }
+}
+
+// ─── AGGREGATE ALL SOURCES ────────────────────────────────────────────────
+async function fetchAllSources() {
+  const [newsapi, truthsocial, whitehouse] = await Promise.allSettled([
+    fetchNewsAPI(),
+    fetchTruthSocial(),
+    fetchWhiteHouse(),
+  ])
+  return [
+    newsapi.value     ?? '',
+    truthsocial.value ?? '',
+    whitehouse.value  ?? '',
+  ].filter(Boolean).join('\n')
 }
 
 // ─── CLAUDE ANALYSIS ───────────────────────────────────────────────────────
-// Takes the pre-compressed article string — no internal mapping needed
 async function analyzeWithClaude(articleString) {
   if (!articleString) return []
   const today = new Date().toISOString().split('T')[0]
@@ -71,7 +127,7 @@ ${articleString}`
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       model: 'claude-haiku-4-5',
-      max_tokens: 350,
+      max_tokens: 500,
       messages: [{ role: 'user', content: prompt }],
     }),
   })
@@ -96,9 +152,9 @@ export async function fetchAllMentions() {
     .filter(m => !m.date?.startsWith(todayStr))
     .map(m => ({ ...m, isHistorical: true }))
 
-  const articleString = await fetchTrumpStockNews()
+  const articleString = await fetchAllSources()
 
-  // Skip Claude call if news feed hasn't changed since last refresh
+  // Skip Claude call if all sources unchanged since last refresh
   const newHash  = articleString.slice(0, 120)
   const lastHash = sessionStorage.getItem(NEWS_HASH_KEY)
   if (newHash && newHash === lastHash) {
