@@ -1,7 +1,22 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
+import { extractStocksFromPosts } from './api'
 
-const REFRESH_MS = 60 * 60 * 1000
-const STORAGE_KEY = 'truth_social_posts'
+const REFRESH_MS        = 60 * 60 * 1000
+const STORAGE_KEY       = 'truth_social_posts'
+const STOCK_STORAGE_KEY = 'trump_market_mentions'
+
+// Push extracted stock mentions into the shared stock mentions store
+function pushToStockMentions(newMentions) {
+  if (!newMentions.length) return
+  try {
+    const existing = JSON.parse(localStorage.getItem(STOCK_STORAGE_KEY) || '[]')
+    const seen = new Set(existing.map(m => `${m.ticker}-${m.date}`))
+    const toAdd = newMentions.filter(m => !seen.has(`${m.ticker}-${m.date}`))
+    if (!toAdd.length) return
+    const merged = [...toAdd, ...existing].sort((a, b) => (a.date < b.date ? 1 : -1))
+    localStorage.setItem(STOCK_STORAGE_KEY, JSON.stringify(merged))
+  } catch {}
+}
 
 function loadStored() {
   try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]') }
@@ -145,6 +160,13 @@ export default function TruthSocialFeed() {
       setNewLinks(new Set(brandNew.map(p => p.link)))
       prevLinks.current = new Set(fresh.map(p => p.link))
       setPosts(prev => storeAndMerge(prev, fresh))
+
+      // Run Claude extraction on new posts — push any found tickers to Stock Mentions tab
+      if (brandNew.length > 0) {
+        extractStocksFromPosts(brandNew)
+          .then(pushToStockMentions)
+          .catch(() => {})
+      }
       setLastUpdated(new Date())
       setCountdown(REFRESH_MS)
     } catch (e) {

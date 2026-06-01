@@ -304,6 +304,12 @@ const s = {
       : { background: 'rgba(0,0,0,0.04)', border: '1px solid rgba(0,0,0,0.1)', color: '#6b7280' }),
   }),
   sourceLink: { color: '#003087', textDecoration: 'none', fontSize: 12 },
+  tsBadge: {
+    display: 'inline-block', fontSize: 9, fontWeight: 800,
+    background: 'rgba(196,18,48,0.08)', border: '1px solid rgba(196,18,48,0.22)',
+    color: '#c41230', padding: '1px 6px', borderRadius: 4,
+    letterSpacing: '0.08em', marginRight: 6, verticalAlign: 'middle',
+  },
   emptyCell: { textAlign: 'center', padding: '60px 20px', fontSize: 14 },
   spinner: {
     width: 36,
@@ -599,11 +605,12 @@ export default function TrumpStockTracker() {
                       : <span style={{ color: '#475569' }}>—</span>}
                   </td>
                   <td style={s.td}>
+                    {m.fromTruthSocial && <span style={s.tsBadge}>TRUTH</span>}
                     {m.source
                       ? <a href={m.source.startsWith('http') ? m.source : '#'} target="_blank" rel="noreferrer" style={s.sourceLink}>
                           {m.source.replace(/https?:\/\/(www\.)?/, '').slice(0, 32)}{m.source.length > 32 ? '…' : ''}
                         </a>
-                      : <span style={{ color: '#475569' }}>—</span>}
+                      : <span style={{ color: '#9ca3af' }}>—</span>}
                   </td>
                 </tr>
               ))

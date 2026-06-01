@@ -166,6 +166,42 @@ export async function fetchAllMentions() {
   return mergeAndStore(historical, todayFresh)
 }
 
+// ─── TRUTH SOCIAL → STOCK EXTRACTION ──────────────────────────────────────
+// Called directly from TruthSocialFeed when new posts arrive — bypasses the
+// hourly news cycle and catches mentions the moment Trump posts them.
+export async function extractStocksFromPosts(posts) {
+  if (!posts.length) return []
+  const today = new Date().toISOString().split('T')[0]
+
+  const postText = posts
+    .map(p => `[${(p.pubDate ?? '').slice(0, 16)}] ${(p.content ?? '').slice(0, 220)} <${p.link ?? ''}>`)
+    .join('\n')
+
+  const prompt = `Extract stock/company mentions from these Truth Social posts by Donald Trump. Return JSON array only, [] if none.
+Schema: {date:"${today} HH:MM",ticker,company,context,sentiment:"bullish|bearish|neutral",sentimentReason,source}
+Use the post URL as source. Only include publicly traded companies with a clear ticker.
+
+${postText}`
+
+  const response = await fetch('/api/chat', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      model: 'claude-haiku-4-5',
+      max_tokens: 500,
+      messages: [{ role: 'user', content: prompt }],
+    }),
+  })
+
+  if (!response.ok) return []
+  const data = await response.json()
+  const text  = data.content?.filter(b => b.type === 'text').map(b => b.text).join('') ?? ''
+  const clean = text.replace(/```json|```/g, '').trim()
+  const match = clean.match(/\[[\s\S]*?\]/)
+  const results = match ? JSON.parse(match[0]) : []
+  return results.map(r => ({ ...r, isHistorical: false, fromTruthSocial: true }))
+}
+
 // ─── STOCK PRICE FETCH ─────────────────────────────────────────────────────
 export async function fetchStockPrice(ticker) {
   if (!FINNHUB_KEY) return { price: null, change: null, changePct: null }
