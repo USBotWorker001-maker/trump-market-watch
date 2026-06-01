@@ -156,11 +156,10 @@ export default function CongressFeed() {
   const [loading, setLoading]       = useState(false)
   const [error, setError]           = useState(null)
   const [lastUpdated, setLastUpdated] = useState(null)
-  const [countdown, setCountdown]   = useState(REFRESH_MS)
   const [filterType, setFilterType] = useState('')
   const [filterName, setFilterName] = useState('')
   const intervalRef                 = useRef(null)
-  const countdownRef                = useRef(null)
+  const timeoutRef                  = useRef(null)
 
   const refresh = useCallback(async () => {
     setLoading(true)
@@ -175,7 +174,6 @@ export default function CongressFeed() {
       if (data.error) throw new Error(data.error)
       setTrades(prev => storeAndMerge(prev, data.trades ?? []))
       setLastUpdated(new Date())
-      setCountdown(REFRESH_MS)
     } catch (e) {
       setError(e.message)
     } finally {
@@ -185,20 +183,20 @@ export default function CongressFeed() {
 
   useEffect(() => {
     if (trades.length === 0) refresh()
-    intervalRef.current = setInterval(refresh, REFRESH_MS)
-    return () => clearInterval(intervalRef.current)
+    const msUntilNextHour = () => {
+      const now = new Date(), next = new Date(now)
+      next.setHours(now.getHours() + 1, 0, 0, 0)
+      return next - now
+    }
+    timeoutRef.current = setTimeout(() => {
+      refresh()
+      intervalRef.current = setInterval(refresh, REFRESH_MS)
+    }, msUntilNextHour())
+    return () => {
+      clearTimeout(timeoutRef.current)
+      clearInterval(intervalRef.current)
+    }
   }, [refresh])
-
-  useEffect(() => {
-    clearInterval(countdownRef.current)
-    countdownRef.current = setInterval(() => setCountdown(c => Math.max(0, c - 1000)), 1000)
-    return () => clearInterval(countdownRef.current)
-  }, [lastUpdated])
-
-  const formatCountdown = (ms) => {
-    const sec = Math.floor(ms / 1000), min = Math.floor(sec / 60)
-    return min > 0 ? `${min}m ${sec % 60}s` : `${sec}s`
-  }
 
   const uniqueNames = [...new Set(trades.map(t => t.representative))].sort()
 
@@ -215,9 +213,7 @@ export default function CongressFeed() {
           <p style={s.heading}>Congressional Trades — Trump Allies</p>
           {lastUpdated && (
             <p style={s.meta}>
-              Updated {lastUpdated.toLocaleTimeString()} · Next refresh in{' '}
-              <span style={s.countdown}>{formatCountdown(countdown)}</span>
-              {' '}· {filtered.length} trades
+              Updated {lastUpdated.toLocaleTimeString()} · Updates at the top of the hour · {filtered.length} trades
             </p>
           )}
           <p style={s.lagNote}>STOCK Act disclosures required within 30–45 days of trade</p>

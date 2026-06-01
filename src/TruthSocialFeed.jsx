@@ -145,11 +145,10 @@ export default function TruthSocialFeed() {
   const [loading, setLoading]       = useState(false)
   const [error, setError]           = useState(null)
   const [lastUpdated, setLastUpdated] = useState(null)
-  const [countdown, setCountdown]   = useState(REFRESH_MS)
   const [newLinks, setNewLinks]     = useState(new Set())
   const prevLinks                   = useRef(new Set(loadStored().map(p => p.link)))
   const intervalRef                 = useRef(null)
-  const countdownRef                = useRef(null)
+  const timeoutRef                  = useRef(null)
 
   const refresh = useCallback(async (isInitial = false) => {
     setLoading(true)
@@ -168,7 +167,6 @@ export default function TruthSocialFeed() {
           .catch(() => {})
       }
       setLastUpdated(new Date())
-      setCountdown(REFRESH_MS)
     } catch (e) {
       setError(e.message)
     } finally {
@@ -177,24 +175,22 @@ export default function TruthSocialFeed() {
   }, [])
 
   useEffect(() => {
-    // First load: fetch 3 days of history. Subsequent auto-refreshes: latest page only.
     const stored = loadStored()
     refresh(stored.length === 0)
-    intervalRef.current = setInterval(() => refresh(false), REFRESH_MS)
-    return () => clearInterval(intervalRef.current)
+    const msUntilNextHour = () => {
+      const now = new Date(), next = new Date(now)
+      next.setHours(now.getHours() + 1, 0, 0, 0)
+      return next - now
+    }
+    timeoutRef.current = setTimeout(() => {
+      refresh(false)
+      intervalRef.current = setInterval(() => refresh(false), REFRESH_MS)
+    }, msUntilNextHour())
+    return () => {
+      clearTimeout(timeoutRef.current)
+      clearInterval(intervalRef.current)
+    }
   }, [refresh])
-
-  useEffect(() => {
-    clearInterval(countdownRef.current)
-    countdownRef.current = setInterval(() => setCountdown(c => Math.max(0, c - 1000)), 1000)
-    return () => clearInterval(countdownRef.current)
-  }, [lastUpdated])
-
-  const formatCountdown = (ms) => {
-    const s = Math.floor(ms / 1000)
-    const m = Math.floor(s / 60)
-    return m > 0 ? `${m}m ${s % 60}s` : `${s}s`
-  }
 
   return (
     <div style={s.root}>
@@ -203,9 +199,7 @@ export default function TruthSocialFeed() {
           <p style={s.heading}>Truth Social — @realDonaldTrump</p>
           {lastUpdated && (
             <p style={s.meta}>
-              Updated {lastUpdated.toLocaleTimeString()} · Next refresh in{' '}
-              <span style={s.countdown}>{formatCountdown(countdown)}</span>
-              {' '}· {posts.length} posts
+              Updated {lastUpdated.toLocaleTimeString()} · Updates at the top of the hour · {posts.length} posts
             </p>
           )}
         </div>

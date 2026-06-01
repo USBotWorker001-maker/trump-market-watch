@@ -342,14 +342,13 @@ export default function TrumpStockTracker() {
   const [filterDay, setFilterDay]     = useState('')
   const [filterYear, setFilterYear]   = useState('')
   const [newCount, setNewCount]       = useState(0)
-  const [countdown, setCountdown]     = useState(REFRESH_MS)
   const [notifPerm, setNotifPerm]     = useState(
     typeof Notification !== 'undefined' ? Notification.permission : 'denied'
   )
 
   const prevTickers  = useRef(new Set())
   const intervalRef  = useRef(null)
-  const countdownRef = useRef(null)
+  const timeoutRef   = useRef(null)
 
   // Browser notification
   const notify = useCallback((m) => {
@@ -381,7 +380,6 @@ export default function TrumpStockTracker() {
       prevTickers.current = new Set(enriched.map((m) => m.ticker))
       setMentions(enriched)
       setLastUpdated(new Date())
-      setCountdown(REFRESH_MS)
     } catch (e) {
       setError(e.message)
     } finally {
@@ -389,19 +387,24 @@ export default function TrumpStockTracker() {
     }
   }, [notify])
 
-  // Auto-refresh
+  // Auto-refresh at top of every hour
   useEffect(() => {
     fetchAll()
-    intervalRef.current = setInterval(fetchAll, REFRESH_MS)
-    return () => clearInterval(intervalRef.current)
+    const msUntilNextHour = () => {
+      const now = new Date()
+      const next = new Date(now)
+      next.setHours(now.getHours() + 1, 0, 0, 0)
+      return next - now
+    }
+    timeoutRef.current = setTimeout(() => {
+      fetchAll()
+      intervalRef.current = setInterval(fetchAll, REFRESH_MS)
+    }, msUntilNextHour())
+    return () => {
+      clearTimeout(timeoutRef.current)
+      clearInterval(intervalRef.current)
+    }
   }, [fetchAll])
-
-  // Countdown ticker
-  useEffect(() => {
-    clearInterval(countdownRef.current)
-    countdownRef.current = setInterval(() => setCountdown((c) => Math.max(0, c - 1000)), 1000)
-    return () => clearInterval(countdownRef.current)
-  }, [lastUpdated])
 
   // Derived data
   const todayStr      = new Date().toISOString().split('T')[0]
@@ -468,8 +471,7 @@ export default function TrumpStockTracker() {
         </div>
         {lastUpdated && (
           <span style={s.statusLabel}>
-            Last updated: {lastUpdated.toLocaleTimeString()} · Next refresh in{' '}
-            <strong style={{ color: '#f59e0b' }}>{formatCountdown(countdown)}</strong>
+            Last updated: {lastUpdated.toLocaleTimeString()} · Updates at the top of the hour
           </span>
         )}
         {newCount > 0 && <span style={s.newBadge}>+{newCount} NEW</span>}

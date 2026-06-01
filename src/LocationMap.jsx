@@ -135,19 +135,19 @@ export default function LocationMap() {
   const [loading, setLoading]       = useState(false)
   const [error, setError]           = useState(null)
   const [lastUpdated, setLastUpdated] = useState(null)
-  const [countdown, setCountdown]   = useState(REFRESH_MS)
   const mapRef                      = useRef(null)
   const leafletMapRef               = useRef(null)
   const markerRef                   = useRef(null)
   const nextMarkerRef               = useRef(null)
   const routeLineRef                = useRef(null)
   const intervalRef                 = useRef(null)
-  const countdownRef                = useRef(null)
+  const timeoutRef                  = useRef(null)
   const leafletLoadedRef            = useRef(false)
 
-  const formatCountdown = (ms) => {
-    const sec = Math.floor(ms / 1000), min = Math.floor(sec / 60)
-    return min > 0 ? `${min}m ${sec % 60}s` : `${sec}s`
+  const msUntilNextHour = () => {
+    const now = new Date(), next = new Date(now)
+    next.setHours(now.getHours() + 1, 0, 0, 0)
+    return next - now
   }
 
   // ── Load Leaflet from CDN ──
@@ -261,7 +261,6 @@ export default function LocationMap() {
       saveLocation(loc)
       setHistory(prev => [loc, ...prev].slice(0, 10))
       setLastUpdated(new Date())
-      setCountdown(REFRESH_MS)
       initMap(loc.lat, loc.lng, loc.name, loc.nextLat, loc.nextLng, loc.nextLocation)
     } catch (e) {
       setError(e.message)
@@ -276,8 +275,12 @@ export default function LocationMap() {
       initMap(locData.lat, locData.lng, locData.name, locData.nextLat, locData.nextLng, locData.nextLocation)
     }
     refresh()
-    intervalRef.current = setInterval(refresh, REFRESH_MS)
+    timeoutRef.current = setTimeout(() => {
+      refresh()
+      intervalRef.current = setInterval(refresh, REFRESH_MS)
+    }, msUntilNextHour())
     return () => {
+      clearTimeout(timeoutRef.current)
       clearInterval(intervalRef.current)
       if (leafletMapRef.current) {
         leafletMapRef.current.remove()
@@ -287,12 +290,6 @@ export default function LocationMap() {
     }
   }, [])
 
-  useEffect(() => {
-    clearInterval(countdownRef.current)
-    countdownRef.current = setInterval(() => setCountdown(c => Math.max(0, c - 1000)), 1000)
-    return () => clearInterval(countdownRef.current)
-  }, [lastUpdated])
-
   return (
     <div style={s.root}>
       <div style={s.topBar}>
@@ -300,8 +297,7 @@ export default function LocationMap() {
           <p style={s.heading}>Trump Location Tracker</p>
           {lastUpdated && (
             <p style={s.meta}>
-              Updated {lastUpdated.toLocaleTimeString()} · Next refresh in{' '}
-              <span style={s.countdown}>{formatCountdown(countdown)}</span>
+              Updated {lastUpdated.toLocaleTimeString()} · Updates at the top of the hour
             </p>
           )}
         </div>
