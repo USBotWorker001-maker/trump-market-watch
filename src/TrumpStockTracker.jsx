@@ -177,40 +177,58 @@ const s = {
   },
   statVal: { fontSize: 26, fontWeight: 800, color: '#f8fafc', letterSpacing: '-0.02em' },
   statLabel: { fontSize: 11, color: '#64748b', letterSpacing: '0.12em', textTransform: 'uppercase', marginTop: 4 },
-  tabRow: {
+  filterRow: {
     position: 'relative',
     zIndex: 1,
     display: 'flex',
-    gap: 8,
+    gap: 10,
+    alignItems: 'center',
     maxWidth: 1200,
     margin: '16px auto 0',
     padding: '0 24px',
     flexWrap: 'wrap',
   },
-  tab: (active) => ({
-    background: active
-      ? 'linear-gradient(135deg, rgba(220,38,38,0.25), rgba(185,28,28,0.15))'
-      : 'rgba(15,23,42,0.6)',
-    border: active ? '1px solid rgba(220,38,38,0.5)' : '1px solid rgba(30,41,59,0.8)',
-    color: active ? '#fca5a5' : '#64748b',
+  filterLabel: {
+    fontSize: 12,
+    color: '#64748b',
+    letterSpacing: '0.1em',
+    textTransform: 'uppercase',
+    marginRight: 4,
+  },
+  select: {
+    background: 'rgba(15,23,42,0.9)',
+    border: '1px solid rgba(30,41,59,0.8)',
+    color: '#e2e8f0',
     borderRadius: 8,
-    padding: '7px 16px',
+    padding: '8px 14px',
+    fontSize: 13,
+    fontFamily: "'Georgia', serif",
     cursor: 'pointer',
+    outline: 'none',
+    appearance: 'none',
+    WebkitAppearance: 'none',
+    backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%2364748b' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E")`,
+    backgroundRepeat: 'no-repeat',
+    backgroundPosition: 'right 10px center',
+    paddingRight: 32,
+    minWidth: 110,
+  },
+  clearBtn: {
+    background: 'transparent',
+    border: '1px solid rgba(100,116,139,0.4)',
+    color: '#64748b',
+    borderRadius: 8,
+    padding: '8px 14px',
     fontSize: 12,
     fontFamily: "'Georgia', serif",
-    fontWeight: active ? 700 : 400,
-    letterSpacing: '0.06em',
-    display: 'flex',
-    alignItems: 'center',
-    gap: 8,
+    cursor: 'pointer',
+    letterSpacing: '0.05em',
     transition: 'all 0.2s',
-  }),
-  tabCount: {
-    background: 'rgba(0,0,0,0.3)',
-    borderRadius: 99,
-    padding: '1px 7px',
-    fontSize: 11,
-    fontFamily: 'monospace',
+  },
+  filterCount: {
+    fontSize: 12,
+    color: '#94a3b8',
+    marginLeft: 6,
   },
   tableWrapper: {
     position: 'relative',
@@ -327,7 +345,9 @@ export default function TrumpStockTracker() {
   const [loading, setLoading]         = useState(false)
   const [lastUpdated, setLastUpdated] = useState(null)
   const [error, setError]             = useState(null)
-  const [filterDay, setFilterDay]     = useState('all')
+  const [filterMonth, setFilterMonth] = useState('')
+  const [filterDay, setFilterDay]     = useState('')
+  const [filterYear, setFilterYear]   = useState('')
   const [newCount, setNewCount]       = useState(0)
   const [countdown, setCountdown]     = useState(REFRESH_MS)
   const [notifPerm, setNotifPerm]     = useState(
@@ -393,12 +413,23 @@ export default function TrumpStockTracker() {
   // Derived data
   const todayStr      = new Date().toISOString().split('T')[0]
   const todayMentions = mentions.filter((m) => m.date?.startsWith(todayStr))
-  const dates         = getPastDates(4)
-  const tabs          = [
-    { key: 'all', label: 'All 4 Days' },
-    ...dates.map((d, i) => ({ key: d, label: i === 0 ? `Today (${d})` : i === 1 ? `Yesterday (${d})` : d })),
-  ]
-  const filtered = filterDay === 'all' ? mentions : mentions.filter((m) => m.date?.startsWith(filterDay))
+
+  // Build unique month/day/year options from mentions
+  const allDates = mentions.map((m) => m.date?.split(' ')[0]).filter(Boolean)
+  const uniqueYears  = [...new Set(allDates.map((d) => d.split('-')[0]))].sort((a,b) => b-a)
+  const uniqueMonths = [...new Set(allDates.map((d) => d.split('-')[1]))].sort()
+  const uniqueDays   = [...new Set(allDates.map((d) => d.split('-')[2]))].sort((a,b) => a-b)
+
+  const monthNames = { '01':'January','02':'February','03':'March','04':'April','05':'May','06':'June','07':'July','08':'August','09':'September','10':'October','11':'November','12':'December' }
+
+  const filtered = mentions.filter((m) => {
+    const d = m.date?.split(' ')[0] ?? ''
+    const [y, mo, day] = d.split('-')
+    if (filterYear  && y   !== filterYear)  return false
+    if (filterMonth && mo  !== filterMonth) return false
+    if (filterDay   && day !== filterDay)   return false
+    return true
+  })
 
   const missingAnthropicKey = !ANTHROPIC_KEY
   const missingFinnhubKey   = !FINNHUB_KEY
@@ -478,16 +509,38 @@ export default function TrumpStockTracker() {
         ))}
       </div>
 
-      {/* ── Day tabs ── */}
-      <div style={s.tabRow}>
-        {tabs.map((t) => (
-          <button key={t.key} style={s.tab(filterDay === t.key)} onClick={() => setFilterDay(t.key)}>
-            {t.label}
-            <span style={s.tabCount}>
-              {t.key === 'all' ? mentions.length : mentions.filter((m) => m.date?.startsWith(t.key)).length}
-            </span>
+      {/* ── Date Filter Dropdowns ── */}
+      <div style={s.filterRow}>
+        <span style={s.filterLabel}>Filter by:</span>
+
+        <select style={s.select} value={filterMonth} onChange={(e) => setFilterMonth(e.target.value)}>
+          <option value="">All Months</option>
+          {uniqueMonths.map((m) => (
+            <option key={m} value={m}>{monthNames[m] ?? m}</option>
+          ))}
+        </select>
+
+        <select style={s.select} value={filterDay} onChange={(e) => setFilterDay(e.target.value)}>
+          <option value="">All Days</option>
+          {uniqueDays.map((d) => (
+            <option key={d} value={d}>{parseInt(d, 10)}</option>
+          ))}
+        </select>
+
+        <select style={s.select} value={filterYear} onChange={(e) => setFilterYear(e.target.value)}>
+          <option value="">All Years</option>
+          {uniqueYears.map((y) => (
+            <option key={y} value={y}>{y}</option>
+          ))}
+        </select>
+
+        {(filterMonth || filterDay || filterYear) && (
+          <button style={s.clearBtn} onClick={() => { setFilterMonth(''); setFilterDay(''); setFilterYear('') }}>
+            ✕ Clear
           </button>
-        ))}
+        )}
+
+        <span style={s.filterCount}>{filtered.length} result{filtered.length !== 1 ? 's' : ''}</span>
       </div>
 
       {/* ── Table ── */}
