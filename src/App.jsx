@@ -2,11 +2,13 @@ import { useState } from 'react'
 import TrumpStockTracker from './TrumpStockTracker'
 import TruthSocialFeed from './TruthSocialFeed'
 import CongressFeed from './CongressFeed'
+import LocationMap from './LocationMap'
 
 const tabs = [
-  { id: 'stocks',   label: 'Stock Mentions'       },
-  { id: 'truth',    label: 'Truth Social'          },
-  { id: 'congress', label: 'Congressional Trades'  },
+  { id: 'stocks',   label: 'Stock Mentions'      },
+  { id: 'truth',    label: 'Truth Social'         },
+  { id: 'congress', label: 'Congressional Trades' },
+  { id: 'location', label: 'Location'             },
 ]
 
 const s = {
@@ -51,6 +53,7 @@ export default function App() {
       {activeTab === 'stocks'   && <TrumpStockTracker />}
       {activeTab === 'truth'    && <TruthSocialFeed />}
       {activeTab === 'congress' && <CongressFeed />}
+      {activeTab === 'location' && <LocationMap />}
     </div>
   )
 }
