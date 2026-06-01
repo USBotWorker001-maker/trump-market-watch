@@ -2,6 +2,11 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 
 const REFRESH_MS   = 60 * 60 * 1000
 const STORAGE_KEY  = 'congress_trades'
+const FETCHED_AT_KEY = 'congress_fetched_at'
+
+function getStoredFetchedAt() {
+  try { return localStorage.getItem(FETCHED_AT_KEY) ?? null } catch { return null }
+}
 
 // ─── TRUMP ALLIES — curated list of MAGA-aligned members ─────────────────
 const TRUMP_ALLIES = new Set([
@@ -155,7 +160,9 @@ export default function CongressFeed() {
   const [trades, setTrades]         = useState(() => loadStored())
   const [loading, setLoading]       = useState(false)
   const [error, setError]           = useState(null)
-  const [lastUpdated, setLastUpdated] = useState(null)
+  const [lastUpdated, setLastUpdated] = useState(() => {
+    const t = getStoredFetchedAt(); return t ? new Date(t) : null
+  })
   const [filterType, setFilterType] = useState('')
   const [filterName, setFilterName] = useState('')
   const intervalRef                 = useRef(null)
@@ -173,7 +180,9 @@ export default function CongressFeed() {
       const data = await res.json()
       if (data.error) throw new Error(data.error)
       setTrades(prev => storeAndMerge(prev, data.trades ?? []))
-      setLastUpdated(new Date())
+      const now = new Date()
+      setLastUpdated(now)
+      try { localStorage.setItem(FETCHED_AT_KEY, now.toISOString()) } catch {}
     } catch (e) {
       setError(e.message)
     } finally {

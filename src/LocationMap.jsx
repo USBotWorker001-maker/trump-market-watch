@@ -1,7 +1,12 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 
 const REFRESH_MS  = 60 * 60 * 1000
-const STORAGE_KEY = 'trump_location'
+const STORAGE_KEY    = 'trump_location'
+const FETCHED_AT_KEY = 'trump_location_fetched_at'
+
+function getStoredFetchedAt() {
+  try { return localStorage.getItem(FETCHED_AT_KEY) ?? null } catch { return null }
+}
 
 // Known Trump locations with coordinates
 const KNOWN_LOCATIONS = {
@@ -134,7 +139,9 @@ export default function LocationMap() {
   const [history, setHistory]       = useState([])
   const [loading, setLoading]       = useState(false)
   const [error, setError]           = useState(null)
-  const [lastUpdated, setLastUpdated] = useState(null)
+  const [lastUpdated, setLastUpdated] = useState(() => {
+    const t = getStoredFetchedAt(); return t ? new Date(t) : null
+  })
   const mapRef                      = useRef(null)
   const leafletMapRef               = useRef(null)
   const markerRef                   = useRef(null)
@@ -260,7 +267,9 @@ export default function LocationMap() {
       setLocData(loc)
       saveLocation(loc)
       setHistory(prev => [loc, ...prev].slice(0, 10))
-      setLastUpdated(new Date())
+      const now = new Date()
+      setLastUpdated(now)
+      try { localStorage.setItem(FETCHED_AT_KEY, now.toISOString()) } catch {}
       initMap(loc.lat, loc.lng, loc.name, loc.nextLat, loc.nextLng, loc.nextLocation)
     } catch (e) {
       setError(e.message)

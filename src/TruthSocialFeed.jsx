@@ -4,6 +4,11 @@ import { extractStocksFromPosts } from './api'
 const REFRESH_MS        = 60 * 60 * 1000
 const STORAGE_KEY       = 'truth_social_posts'
 const STOCK_STORAGE_KEY = 'trump_market_mentions'
+const FETCHED_AT_KEY    = 'truth_social_fetched_at'
+
+function getStoredFetchedAt() {
+  try { return localStorage.getItem(FETCHED_AT_KEY) ?? null } catch { return null }
+}
 
 // Push extracted stock mentions into the shared stock mentions store
 function pushToStockMentions(newMentions) {
@@ -144,7 +149,9 @@ export default function TruthSocialFeed() {
   const [posts, setPosts]           = useState(() => loadStored())
   const [loading, setLoading]       = useState(false)
   const [error, setError]           = useState(null)
-  const [lastUpdated, setLastUpdated] = useState(null)
+  const [lastUpdated, setLastUpdated] = useState(() => {
+    const t = getStoredFetchedAt(); return t ? new Date(t) : null
+  })
   const [newLinks, setNewLinks]     = useState(new Set())
   const prevLinks                   = useRef(new Set(loadStored().map(p => p.link)))
   const intervalRef                 = useRef(null)
@@ -166,7 +173,9 @@ export default function TruthSocialFeed() {
           .then(pushToStockMentions)
           .catch(() => {})
       }
-      setLastUpdated(new Date())
+      const now = new Date()
+      setLastUpdated(now)
+      try { localStorage.setItem(FETCHED_AT_KEY, now.toISOString()) } catch {}
     } catch (e) {
       setError(e.message)
     } finally {

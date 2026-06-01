@@ -4,6 +4,7 @@ import {
   fetchStockPrice,
   formatCountdown,
   getPastDates,
+  getLastFetchedAt,
   ANTHROPIC_KEY,
   FINNHUB_KEY,
 } from './api'
@@ -336,7 +337,9 @@ const s = {
 export default function TrumpStockTracker() {
   const [mentions, setMentions]       = useState([])
   const [loading, setLoading]         = useState(false)
-  const [lastUpdated, setLastUpdated] = useState(null)
+  const [lastUpdated, setLastUpdated] = useState(() => {
+    const t = getLastFetchedAt(); return t ? new Date(t) : null
+  })
   const [error, setError]             = useState(null)
   const [filterMonth, setFilterMonth] = useState('')
   const [filterDay, setFilterDay]     = useState('')

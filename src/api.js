@@ -3,8 +3,13 @@ export const ANTHROPIC_KEY = import.meta.env.VITE_ANTHROPIC_API_KEY ?? ''
 export const FINNHUB_KEY   = import.meta.env.VITE_FINNHUB_API_KEY   ?? ''
 export const NEWSAPI_KEY   = import.meta.env.VITE_NEWSAPI_KEY ?? ''
 
-const STORAGE_KEY   = 'trump_market_mentions'
-const NEWS_HASH_KEY = 'trump_news_hash'
+const STORAGE_KEY    = 'trump_market_mentions'
+const NEWS_HASH_KEY  = 'trump_news_hash'
+const FETCHED_AT_KEY = 'trump_market_fetched_at'
+
+export function getLastFetchedAt() {
+  try { return localStorage.getItem(FETCHED_AT_KEY) ?? null } catch { return null }
+}
 
 // ─── DATE HELPERS ──────────────────────────────────────────────────────────
 export function getPastDates(numDays) {
@@ -163,6 +168,7 @@ export async function fetchAllMentions() {
   if (newHash) sessionStorage.setItem(NEWS_HASH_KEY, newHash)
 
   const todayFresh = await analyzeWithClaude(articleString)
+  try { localStorage.setItem(FETCHED_AT_KEY, new Date().toISOString()) } catch {}
   return mergeAndStore(historical, todayFresh)
 }
 
