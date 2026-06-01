@@ -348,7 +348,7 @@ export default function TrumpStockTracker() {
   // Browser notification
   const notify = useCallback((m) => {
     if (typeof Notification === 'undefined' || Notification.permission !== 'granted') return
-    new Notification(`🇺🇸 Trump mentioned $${m.ticker}`, { body: m.context })
+    new Notification(`Trump mentioned $${m.ticker}`, { body: m.context })
   }, [])
 
   const requestNotif = async () => {
@@ -445,10 +445,10 @@ export default function TrumpStockTracker() {
           </div>
           <div style={s.headerRight}>
             {notifPerm !== 'granted' && (
-              <button style={s.notifBtn} onClick={requestNotif}>🔔 Enable Alerts</button>
+              <button style={s.notifBtn} onClick={requestNotif}>Enable Alerts</button>
             )}
             <button style={s.refreshBtn(loading)} onClick={fetchAll} disabled={loading}>
-              {loading ? '⟳ Scanning...' : '⟳ Refresh Now'}
+              {loading ? 'Scanning...' : 'Refresh Now'}
             </button>
           </div>
         </div>
@@ -472,12 +472,12 @@ export default function TrumpStockTracker() {
       {/* ── Warnings ── */}
       {missingAnthropicKey && (
         <div style={s.alertBox('#fde68a', 'rgba(251,191,36,0.08)', 'rgba(251,191,36,0.3)')}>
-          <strong>⚠️ Anthropic API key missing.</strong> Add <code style={s.code}>VITE_ANTHROPIC_API_KEY</code> to your <code style={s.code}>.env</code> file. See README for instructions.
+          <strong>Anthropic API key missing.</strong> Add <code style={s.code}>VITE_ANTHROPIC_API_KEY</code> to your <code style={s.code}>.env</code> file. See README for instructions.
         </div>
       )}
       {missingFinnhubKey && (
         <div style={s.alertBox('#93c5fd', 'rgba(59,130,246,0.06)', 'rgba(59,130,246,0.25)')}>
-          <strong>ℹ️ Finnhub key missing.</strong> Stock prices won't load. Add <code style={s.code}>VITE_FINNHUB_API_KEY</code> to your <code style={s.code}>.env</code> file. Free key at{' '}
+          <strong>Finnhub key missing.</strong> Stock prices won't load. Add <code style={s.code}>VITE_FINNHUB_API_KEY</code> to your <code style={s.code}>.env</code> file. Free key at{' '}
           <a href="https://finnhub.io" target="_blank" rel="noreferrer" style={{ color: '#60a5fa' }}>finnhub.io</a>.
         </div>
       )}
@@ -493,7 +493,7 @@ export default function TrumpStockTracker() {
           { label: 'Mentions Today',    val: todayMentions.length },
           { label: 'Last 4 Days Total', val: mentions.length },
           { label: 'Unique Tickers',    val: new Set(mentions.map((m) => m.ticker)).size },
-          { label: 'Alert Status',      val: notifPerm === 'granted' ? '✅ Active' : '❌ Off' },
+          { label: 'Alert Status',      val: notifPerm === 'granted' ? 'Active' : 'Off' },
         ].map((stat) => (
           <div key={stat.label} style={s.statCard}>
             <div style={s.statVal}>{loading && mentions.length === 0 ? '—' : stat.val}</div>
@@ -559,8 +559,7 @@ export default function TrumpStockTracker() {
             ) : filtered.length === 0 ? (
               <tr>
                 <td colSpan={8} style={s.emptyCell}>
-                  <div style={{ fontSize: 48 }}>🤫</div>
-                  <p style={{ color: '#94a3b8', marginTop: 8 }}>No stock mentions found for this period.</p>
+                  <p style={{ color: '#9ca3af', marginTop: 8 }}>No stock mentions found for this period.</p>
                 </td>
               </tr>
             ) : (
