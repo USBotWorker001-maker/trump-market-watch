@@ -1,10 +1,12 @@
 import { useState } from 'react'
 import TrumpStockTracker from './TrumpStockTracker'
 import TruthSocialFeed from './TruthSocialFeed'
+import CongressFeed from './CongressFeed'
 
 const tabs = [
-  { id: 'stocks', label: 'Stock Mentions' },
-  { id: 'truth',  label: 'Truth Social'   },
+  { id: 'stocks',   label: 'Stock Mentions'       },
+  { id: 'truth',    label: 'Truth Social'          },
+  { id: 'congress', label: 'Congressional Trades'  },
 ]
 
 const s = {
@@ -46,8 +48,9 @@ export default function App() {
           </button>
         ))}
       </div>
-      {activeTab === 'stocks' && <TrumpStockTracker />}
-      {activeTab === 'truth'  && <TruthSocialFeed />}
+      {activeTab === 'stocks'   && <TrumpStockTracker />}
+      {activeTab === 'truth'    && <TruthSocialFeed />}
+      {activeTab === 'congress' && <CongressFeed />}
     </div>
   )
 }
