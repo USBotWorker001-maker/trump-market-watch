@@ -14,14 +14,9 @@ export default async function handler(req, res) {
 
   // ─── RSS proxy (Truth Social, White House) ───────────────────────────────
   if (type === 'rss') {
-    const { url } = body
-    try {
-      const response = await fetch(url, {
-        headers: { 'User-Agent': 'Mozilla/5.0 (compatible; TrumpMarketWatch/1.0)' },
-      })
-      const xml = await response.text()
+    const { url, pages = 1 } = body
 
-      // Parse <item> blocks from RSS XML
+    function parseXml(xml) {
       const items = []
       const itemRegex = /<item>([\s\S]*?)<\/item>/g
       let match
@@ -38,7 +33,38 @@ export default async function handler(req, res) {
           content: get('content:encoded') || get('description'),
         })
       }
-      return res.status(200).json({ items })
+      return items
+    }
+
+    try {
+      // Fetch up to `pages` pages — Truth Social RSS supports ?page=N
+      const pageNums = Array.from({ length: Math.min(pages, 5) }, (_, i) => i + 1)
+      const results = await Promise.allSettled(
+        pageNums.map(n => {
+          const pageUrl = n === 1 ? url : `${url}?page=${n}`
+          return fetch(pageUrl, {
+            headers: { 'User-Agent': 'Mozilla/5.0 (compatible; TrumpMarketWatch/1.0)' },
+          }).then(r => r.text())
+        })
+      )
+
+      const allItems = []
+      const seen = new Set()
+      for (const r of results) {
+        if (r.status !== 'fulfilled') continue
+        for (const item of parseXml(r.value)) {
+          if (!seen.has(item.link)) { allItems.push(item); seen.add(item.link) }
+        }
+      }
+
+      // Filter to last `days` days if specified
+      const { days } = body
+      const cutoff = days ? Date.now() - days * 24 * 60 * 60 * 1000 : 0
+      const filtered = cutoff
+        ? allItems.filter(i => new Date(i.pubDate).getTime() >= cutoff)
+        : allItems
+
+      return res.status(200).json({ items: filtered })
     } catch (e) {
       return res.status(500).json({ error: e.message, items: [] })
     }
