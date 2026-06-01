@@ -15,7 +15,7 @@ const s = {
   root: {
     minHeight: '100vh',
     background: '#060b14',
-    fontFamily: "'Georgia', 'Times New Roman', serif",
+    fontFamily: "'IBM Plex Sans', sans-serif",
     color: '#e2e8f0',
     position: 'relative',
     overflow: 'hidden',
@@ -61,7 +61,7 @@ const s = {
     gap: 12,
   },
   logoBlock: { display: 'flex', alignItems: 'center', gap: 16 },
-  eagle: { fontSize: 48 },
+  eagle: { flexShrink: 0 },
   title: {
     margin: 0,
     fontSize: 26,
@@ -202,7 +202,7 @@ const s = {
     borderRadius: 8,
     padding: '8px 14px',
     fontSize: 13,
-    fontFamily: "'Georgia', serif",
+    fontFamily: "'IBM Plex Sans', sans-serif",
     cursor: 'pointer',
     outline: 'none',
     appearance: 'none',
@@ -220,7 +220,7 @@ const s = {
     borderRadius: 8,
     padding: '8px 14px',
     fontSize: 12,
-    fontFamily: "'Georgia', serif",
+    fontFamily: "'IBM Plex Sans', sans-serif",
     cursor: 'pointer',
     letterSpacing: '0.05em',
     transition: 'all 0.2s',
@@ -256,7 +256,7 @@ const s = {
     letterSpacing: '0.14em',
     textTransform: 'uppercase',
     borderBottom: '1px solid rgba(220,38,38,0.2)',
-    fontFamily: "'Georgia', serif",
+    fontFamily: "'IBM Plex Sans', sans-serif",
     whiteSpace: 'nowrap',
   },
   tr: (i, hist) => ({
@@ -444,7 +444,13 @@ export default function TrumpStockTracker() {
         <div style={s.flagStripe} />
         <div style={s.headerInner}>
           <div style={s.logoBlock}>
-            <span style={s.eagle}>🦅</span>
+            <svg style={s.eagle} width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect width="48" height="48" rx="10" fill="rgba(220,38,38,0.15)" stroke="rgba(220,38,38,0.4)" strokeWidth="1"/>
+                <polyline points="6,36 14,26 20,30 28,16 34,20 42,10" stroke="#f87171" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+                <polygon points="6,36 14,26 20,30 28,16 34,20 42,10 42,36" fill="rgba(220,38,38,0.12)"/>
+                <circle cx="42" cy="10" r="3" fill="#4ade80"/>
+                <line x1="6" y1="40" x2="42" y2="40" stroke="rgba(100,116,139,0.4)" strokeWidth="1"/>
+              </svg>
             <div>
               <h1 style={s.title}>Trump Market Watch</h1>
               <p style={s.subtitle}>Real-time stock mentions tracker</p>
