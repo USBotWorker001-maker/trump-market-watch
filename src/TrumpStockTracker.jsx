@@ -10,13 +10,13 @@ import {
 
 const REFRESH_MS = 60 * 60 * 1000 // 1 hour
 
-// ─── STYLES ────────────────────────────────────────────────────────────────
+// ─── STYLES — WSJ Light ────────────────────────────────────────────────────
 const s = {
   root: {
     minHeight: '100vh',
-    background: '#060b14',
+    background: '#f8f7f2',
     fontFamily: "'IBM Plex Sans', sans-serif",
-    color: '#e2e8f0',
+    color: '#0a1628',
     position: 'relative',
     overflow: 'hidden',
   },
@@ -24,31 +24,21 @@ const s = {
     position: 'fixed',
     inset: 0,
     backgroundImage:
-      'linear-gradient(rgba(220,38,38,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(220,38,38,0.04) 1px, transparent 1px)',
+      'linear-gradient(rgba(196,18,48,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(196,18,48,0.03) 1px, transparent 1px)',
     backgroundSize: '40px 40px',
     pointerEvents: 'none',
     zIndex: 0,
   },
-  bgGlow: {
-    position: 'fixed',
-    top: '-20%',
-    left: '50%',
-    transform: 'translateX(-50%)',
-    width: '80vw',
-    height: '60vh',
-    background: 'radial-gradient(ellipse, rgba(220,38,38,0.08) 0%, transparent 70%)',
-    pointerEvents: 'none',
-    zIndex: 0,
-  },
+  bgGlow: { display: 'none' },
   flagStripe: {
     height: 5,
-    background: 'linear-gradient(90deg, #b91c1c, #dc2626, #1d4ed8, #dc2626, #b91c1c)',
+    background: 'linear-gradient(90deg, #c41230, #c41230, #003087, #c41230, #c41230)',
   },
   header: {
     position: 'relative',
     zIndex: 1,
-    background: 'linear-gradient(180deg, #0f172a 0%, #060b14 100%)',
-    borderBottom: '1px solid rgba(220,38,38,0.3)',
+    background: '#ffffff',
+    borderBottom: '1px solid rgba(0,0,0,0.1)',
   },
   headerInner: {
     maxWidth: 1200,
@@ -67,22 +57,21 @@ const s = {
     fontSize: 26,
     fontWeight: 800,
     letterSpacing: '0.12em',
-    color: '#f8fafc',
+    color: '#0a1628',
     textTransform: 'uppercase',
-    textShadow: '0 0 30px rgba(220,38,38,0.5)',
   },
   subtitle: {
     margin: '2px 0 0',
     fontSize: 12,
-    color: '#64748b',
+    color: '#9ca3af',
     letterSpacing: '0.2em',
     textTransform: 'uppercase',
   },
   headerRight: { display: 'flex', gap: 10, alignItems: 'center' },
   notifBtn: {
-    background: 'rgba(245,158,11,0.1)',
-    border: '1px solid #f59e0b',
-    color: '#f59e0b',
+    background: 'rgba(0,48,135,0.06)',
+    border: '1px solid rgba(0,48,135,0.3)',
+    color: '#003087',
     borderRadius: 6,
     padding: '8px 16px',
     cursor: 'pointer',
@@ -91,7 +80,7 @@ const s = {
     letterSpacing: '0.05em',
   },
   refreshBtn: (loading) => ({
-    background: 'linear-gradient(135deg, #b91c1c, #dc2626)',
+    background: '#c41230',
     border: 'none',
     color: '#fff',
     borderRadius: 6,
@@ -101,14 +90,13 @@ const s = {
     fontFamily: 'inherit',
     fontWeight: 700,
     letterSpacing: '0.08em',
-    boxShadow: '0 0 20px rgba(220,38,38,0.3)',
     opacity: loading ? 0.6 : 1,
   }),
   statusBar: {
     position: 'relative',
     zIndex: 1,
-    background: 'rgba(15,23,42,0.8)',
-    borderBottom: '1px solid rgba(30,41,59,0.8)',
+    background: '#ffffff',
+    borderBottom: '1px solid rgba(0,0,0,0.08)',
     padding: '8px 24px',
     display: 'flex',
     alignItems: 'center',
@@ -122,13 +110,12 @@ const s = {
     height: 8,
     borderRadius: '50%',
     background: color,
-    boxShadow: `0 0 8px ${color}`,
     animation: 'pulse 2s infinite',
     flexShrink: 0,
   }),
-  statusLabel: { color: '#94a3b8', letterSpacing: '0.05em' },
+  statusLabel: { color: '#6b7280', letterSpacing: '0.05em' },
   newBadge: {
-    background: 'linear-gradient(135deg, #dc2626, #b91c1c)',
+    background: '#c41230',
     color: '#fff',
     fontSize: 10,
     fontWeight: 800,
@@ -152,7 +139,7 @@ const s = {
     color,
   }),
   code: {
-    background: 'rgba(0,0,0,0.3)',
+    background: 'rgba(0,0,0,0.06)',
     padding: '1px 6px',
     borderRadius: 4,
     fontFamily: 'monospace',
@@ -169,14 +156,14 @@ const s = {
     padding: '0 24px',
   },
   statCard: {
-    background: 'linear-gradient(135deg, rgba(15,23,42,0.9), rgba(30,41,59,0.5))',
-    border: '1px solid rgba(30,41,59,0.8)',
+    background: '#ffffff',
+    border: '1px solid rgba(0,0,0,0.1)',
     borderRadius: 10,
     padding: '16px 20px',
     textAlign: 'center',
   },
-  statVal: { fontSize: 26, fontWeight: 800, color: '#f8fafc', letterSpacing: '-0.02em' },
-  statLabel: { fontSize: 11, color: '#64748b', letterSpacing: '0.12em', textTransform: 'uppercase', marginTop: 4 },
+  statVal: { fontSize: 26, fontWeight: 800, color: '#0a1628', letterSpacing: '-0.02em' },
+  statLabel: { fontSize: 11, color: '#9ca3af', letterSpacing: '0.12em', textTransform: 'uppercase', marginTop: 4 },
   filterRow: {
     position: 'relative',
     zIndex: 1,
@@ -190,15 +177,15 @@ const s = {
   },
   filterLabel: {
     fontSize: 12,
-    color: '#64748b',
+    color: '#6b7280',
     letterSpacing: '0.1em',
     textTransform: 'uppercase',
     marginRight: 4,
   },
   select: {
-    background: 'rgba(15,23,42,0.9)',
-    border: '1px solid rgba(30,41,59,0.8)',
-    color: '#e2e8f0',
+    background: '#ffffff',
+    border: '1px solid rgba(0,0,0,0.15)',
+    color: '#0a1628',
     borderRadius: 8,
     padding: '8px 14px',
     fontSize: 13,
@@ -207,7 +194,7 @@ const s = {
     outline: 'none',
     appearance: 'none',
     WebkitAppearance: 'none',
-    backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%2364748b' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E")`,
+    backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236b7280' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E")`,
     backgroundRepeat: 'no-repeat',
     backgroundPosition: 'right 10px center',
     paddingRight: 32,
@@ -215,8 +202,8 @@ const s = {
   },
   clearBtn: {
     background: 'transparent',
-    border: '1px solid rgba(100,116,139,0.4)',
-    color: '#64748b',
+    border: '1px solid rgba(0,0,0,0.15)',
+    color: '#6b7280',
     borderRadius: 8,
     padding: '8px 14px',
     fontSize: 12,
@@ -227,7 +214,7 @@ const s = {
   },
   filterCount: {
     fontSize: 12,
-    color: '#94a3b8',
+    color: '#9ca3af',
     marginLeft: 6,
   },
   tableWrapper: {
@@ -241,38 +228,38 @@ const s = {
   table: {
     width: '100%',
     borderCollapse: 'collapse',
-    background: 'rgba(15,23,42,0.7)',
+    background: '#ffffff',
     borderRadius: 12,
     overflow: 'hidden',
-    border: '1px solid rgba(30,41,59,0.8)',
+    border: '1px solid rgba(0,0,0,0.1)',
   },
   th: {
-    background: 'rgba(30,41,59,0.9)',
+    background: '#f1f5f9',
     padding: '12px 16px',
     textAlign: 'left',
     fontSize: 11,
     fontWeight: 700,
-    color: '#94a3b8',
+    color: '#64748b',
     letterSpacing: '0.14em',
     textTransform: 'uppercase',
-    borderBottom: '1px solid rgba(220,38,38,0.2)',
+    borderBottom: '1px solid rgba(0,0,0,0.08)',
     fontFamily: "'IBM Plex Sans', sans-serif",
     whiteSpace: 'nowrap',
   },
   tr: (i, hist) => ({
     background: hist
-      ? i % 2 === 0 ? 'rgba(30,41,59,0.3)' : 'rgba(20,30,48,0.2)'
-      : i % 2 === 0 ? 'rgba(15,23,42,0.4)' : 'transparent',
-    borderBottom: '1px solid rgba(30,41,59,0.5)',
+      ? i % 2 === 0 ? 'rgba(0,0,0,0.02)' : 'transparent'
+      : i % 2 === 0 ? 'rgba(0,0,0,0.015)' : 'transparent',
+    borderBottom: '1px solid rgba(0,0,0,0.06)',
     transition: 'background 0.2s',
-    opacity: hist ? 0.85 : 1,
+    opacity: hist ? 0.75 : 1,
     animation: 'fadeIn 0.3s ease both',
   }),
-  td: { padding: '14px 16px', fontSize: 14, color: '#e2e8f0', verticalAlign: 'top' },
+  td: { padding: '14px 16px', fontSize: 14, color: '#374151', verticalAlign: 'top' },
   ticker: {
-    background: 'linear-gradient(135deg, rgba(220,38,38,0.2), rgba(185,28,28,0.1))',
-    border: '1px solid rgba(220,38,38,0.4)',
-    color: '#fca5a5',
+    background: 'rgba(196,18,48,0.07)',
+    border: '1px solid rgba(196,18,48,0.25)',
+    color: '#c41230',
     padding: '3px 10px',
     borderRadius: 6,
     fontWeight: 800,
@@ -282,9 +269,9 @@ const s = {
     display: 'inline-block',
   },
   histBadge: {
-    background: 'rgba(100,116,139,0.2)',
-    border: '1px solid rgba(100,116,139,0.4)',
-    color: '#94a3b8',
+    background: 'rgba(0,0,0,0.05)',
+    border: '1px solid rgba(0,0,0,0.12)',
+    color: '#9ca3af',
     fontSize: 9,
     fontWeight: 800,
     padding: '1px 5px',
@@ -296,9 +283,9 @@ const s = {
     verticalAlign: 'middle',
     marginRight: 4,
   },
-  price: { color: '#a7f3d0', fontWeight: 700, fontFamily: 'monospace', fontSize: 15 },
+  price: { color: '#16a34a', fontWeight: 700, fontFamily: 'monospace', fontSize: 15 },
   change: (pct) => ({
-    color: pct >= 0 ? '#4ade80' : '#f87171',
+    color: pct >= 0 ? '#16a34a' : '#c41230',
     fontWeight: 700,
     fontFamily: 'monospace',
     fontSize: 13,
@@ -311,18 +298,18 @@ const s = {
     fontWeight: 700,
     letterSpacing: '0.05em',
     ...(sentiment === 'bullish'
-      ? { background: 'rgba(34,197,94,0.12)', border: '1px solid rgba(34,197,94,0.35)', color: '#4ade80' }
+      ? { background: 'rgba(22,163,74,0.08)', border: '1px solid rgba(22,163,74,0.3)', color: '#16a34a' }
       : sentiment === 'bearish'
-      ? { background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.35)', color: '#f87171' }
-      : { background: 'rgba(148,163,184,0.1)', border: '1px solid rgba(148,163,184,0.25)', color: '#94a3b8' }),
+      ? { background: 'rgba(196,18,48,0.08)', border: '1px solid rgba(196,18,48,0.25)', color: '#c41230' }
+      : { background: 'rgba(0,0,0,0.04)', border: '1px solid rgba(0,0,0,0.1)', color: '#6b7280' }),
   }),
-  sourceLink: { color: '#60a5fa', textDecoration: 'none', fontSize: 12 },
+  sourceLink: { color: '#003087', textDecoration: 'none', fontSize: 12 },
   emptyCell: { textAlign: 'center', padding: '60px 20px', fontSize: 14 },
   spinner: {
     width: 36,
     height: 36,
-    border: '3px solid rgba(220,38,38,0.2)',
-    borderTop: '3px solid #dc2626',
+    border: '3px solid rgba(196,18,48,0.15)',
+    borderTop: '3px solid #c41230',
     borderRadius: '50%',
     animation: 'spin 0.8s linear infinite',
     margin: '0 auto',
@@ -333,9 +320,9 @@ const s = {
     textAlign: 'center',
     padding: '20px',
     fontSize: 11,
-    color: '#334155',
+    color: '#9ca3af',
     letterSpacing: '0.1em',
-    borderTop: '1px solid rgba(30,41,59,0.5)',
+    borderTop: '1px solid rgba(0,0,0,0.08)',
   },
 }
 
@@ -445,11 +432,11 @@ export default function TrumpStockTracker() {
         <div style={s.headerInner}>
           <div style={s.logoBlock}>
             <svg style={s.eagle} width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <rect width="48" height="48" rx="10" fill="rgba(220,38,38,0.15)" stroke="rgba(220,38,38,0.4)" strokeWidth="1"/>
-                <polyline points="6,36 14,26 20,30 28,16 34,20 42,10" stroke="#f87171" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
-                <polygon points="6,36 14,26 20,30 28,16 34,20 42,10 42,36" fill="rgba(220,38,38,0.12)"/>
-                <circle cx="42" cy="10" r="3" fill="#4ade80"/>
-                <line x1="6" y1="40" x2="42" y2="40" stroke="rgba(100,116,139,0.4)" strokeWidth="1"/>
+                <rect width="48" height="48" rx="10" fill="rgba(196,18,48,0.08)" stroke="rgba(196,18,48,0.25)" strokeWidth="1"/>
+                <polyline points="6,36 14,26 20,30 28,16 34,20 42,10" stroke="#c41230" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+                <polygon points="6,36 14,26 20,30 28,16 34,20 42,10 42,36" fill="rgba(196,18,48,0.08)"/>
+                <circle cx="42" cy="10" r="3" fill="#16a34a"/>
+                <line x1="6" y1="40" x2="42" y2="40" stroke="rgba(0,0,0,0.12)" strokeWidth="1"/>
               </svg>
             <div>
               <h1 style={s.title}>Trump Market Watch</h1>
